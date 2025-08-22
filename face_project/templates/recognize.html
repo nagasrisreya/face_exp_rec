@@ -3,10 +3,10 @@
 <head>
     <title>Recognize Face</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 30px; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 30px; background: #f9f9f9; }
         video { border: 3px solid #444; border-radius: 10px; margin: 15px 0; }
-        button { background: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; }
-        #response { margin-top: 20px; font-weight: bold; font-size: 18px; }
+        button { background: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        #response { margin-top: 20px; font-weight: bold; font-size: 20px; color: #222; }
         a { margin-top: 20px; display: inline-block; background: #333; color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; }
     </style>
 </head>
@@ -14,15 +14,18 @@
     <h1>Recognize Face</h1>
     <video id="video" width="400" height="300" autoplay></video><br>
     <button onclick="captureAndSend()">Recognize</button>
-    <p id="response"></p>
+    <p id="response">Recognition result will appear here...</p>
     <a href="/">Back to Home</a>
 
     <script>
         const video = document.getElementById("video");
+
+        // Open webcam
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => { video.srcObject = stream; })
             .catch(err => { console.error("Camera error:", err); });
 
+        // Capture and send to backend
         function captureAndSend() {
             const canvas = document.createElement("canvas");
             canvas.width = video.videoWidth;
@@ -41,7 +44,12 @@
             })
             .then(res => res.json())
             .then(data => {
+                // Expecting: {"message": "Recognized: NAME, Expression: HAPPY"}
                 document.getElementById("response").innerText = data.message;
+            })
+            .catch(err => {
+                console.error("Recognition error:", err);
+                document.getElementById("response").innerText = "Error recognizing face.";
             });
         }
     </script>
