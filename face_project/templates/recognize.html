@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recognize Face</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 30px; }
+        video { border: 3px solid #444; border-radius: 10px; margin: 15px 0; }
+        button { background: #4CAF50; color: white; padding: 12px 20px; border: none; border-radius: 6px; cursor: pointer; }
+        #response { margin-top: 20px; font-weight: bold; font-size: 18px; }
+        a { margin-top: 20px; display: inline-block; background: #333; color: white; padding: 8px 15px; border-radius: 6px; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <h1>Recognize Face</h1>
+    <video id="video" width="400" height="300" autoplay></video><br>
+    <button onclick="captureAndSend()">Recognize</button>
+    <p id="response"></p>
+    <a href="/">Back to Home</a>
+
+    <script>
+        const video = document.getElementById("video");
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => { video.srcObject = stream; })
+            .catch(err => { console.error("Camera error:", err); });
+
+        function captureAndSend() {
+            const canvas = document.createElement("canvas");
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext("2d").drawImage(video, 0, 0);
+
+            const imageData = canvas.toDataURL("image/png");
+
+            fetch("/recognize_user/", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded"
+                },
+                body: `image=${encodeURIComponent(imageData)}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("response").innerText = data.message;
+            });
+        }
+    </script>
+</body>
+</html>
