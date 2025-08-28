@@ -3,9 +3,10 @@
 <head>
     <title>Register Face</title>
     <style>
+        /* General body */
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #74ebd5, #9face6);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0);
             margin: 0;
             padding: 0;
             display: flex;
@@ -14,90 +15,127 @@
             justify-content: center;
         }
 
+        /* Card container */
         .container {
-            background: #fff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0px 8px 20px rgba(0,0,0,0.2);
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
             text-align: center;
-            width: 400px;
+            width: 420px;
+            animation: fadeIn 0.8s ease-in-out;
         }
 
+        /* Animation */
+        @keyframes fadeIn {
+            from {opacity: 0; transform: translateY(20px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+
+        /* Title */
         h1 {
-            color: #333;
-            margin-bottom: 20px;
+            color: #222;
+            margin-bottom: 25px;
+            font-size: 28px;
+            letter-spacing: 1px;
         }
 
+        /* Label */
         label {
-            font-size: 16px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        input[type="text"] {
-            padding: 10px;
-            width: 80%;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        video {
-            border: 2px solid #444;
-            border-radius: 10px;
-            margin: 15px 0;
-        }
-
-        button {
-            background: #4a90e2;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
             font-size: 15px;
-            cursor: pointer;
+            font-weight: 600;
+            color: #444;
+            display: block;
+            margin-bottom: 8px;
+            text-align: left;
+            margin-left: 30px;
+        }
+
+        /* Input */
+        input[type="text"] {
+            padding: 12px;
+            width: 80%;
+            margin: 8px 0 18px 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 14px;
             transition: 0.3s;
         }
 
-        button:hover {
-            background: #357abd;
+        input[type="text"]:focus {
+            border-color: #2193b0;
+            outline: none;
+            box-shadow: 0 0 6px rgba(33, 147, 176, 0.3);
         }
 
-        #response {
-            margin-top: 15px;
+        /* Video box */
+        video {
+            border: 3px solid #2193b0;
+            border-radius: 12px;
+            margin: 15px 0;
+            width: 90%;
+            max-height: 280px;
+            box-shadow: 0px 5px 15px rgba(33, 147, 176, 0.3);
+        }
+
+        /* Button */
+        button {
+            background: linear-gradient(135deg, #2193b0, #6dd5ed);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 16px;
             font-weight: bold;
-            color: green;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
+        button:hover {
+            background: linear-gradient(135deg, #176d80, #4aa8c7);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
+
+        /* Response message */
+        #response {
+            margin-top: 18px;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        /* Back link */
         a {
             display: inline-block;
-            margin-top: 15px;
+            margin-top: 20px;
             text-decoration: none;
-            color: #4a90e2;
+            color: #2193b0;
             font-weight: bold;
+            font-size: 14px;
+            transition: 0.3s;
         }
 
         a:hover {
+            color: #176d80;
             text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>REGISTER FACE</h1>
+        <h1>Register Face</h1>
         <form id="registerForm">
             {% csrf_token %}
-            <label>Enter Name:</label>
-            <br>
+            <label for="name">Enter Name:</label>
             <input type="text" id="name" name="name" required>
-            <br>
-            <video id="video" width="350" height="260" autoplay></video>
-            <br>
+            
+            <video id="video" autoplay></video>
+            
             <button type="button" onclick="captureAndSend()">Register</button>
         </form>
         <p id="response"></p>
-        <a href="/">Back to Home</a>
+        <a href="/">← Back to Home</a>
     </div>
 
     <script>
