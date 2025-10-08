@@ -2,148 +2,115 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Recognize Face</title>
+    <title>Recognize Face & Emotions</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(270deg, #667eea, #764ba2, #6dd5ed, #2193b0);
-            background-size: 800% 800%;
-            animation: gradientBG 20s ease infinite;
-            color: #fff;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        h1 {
-            padding: 30px;
-            font-size: 2.5rem;
-            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
-            margin-top: 50px;
-        }
-
-        .container {
-            background: rgba(255,255,255,0.1);
-            padding: 20px;
-            border-radius: 20px;
-            backdrop-filter: blur(12px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            max-width: 700px;
-        }
-
-        video {
-            border: 4px solid #fff;
-            border-radius: 16px;
-            margin: 20px 0;
-            width: 480px;
-            height: 360px;
-            box-shadow: 0px 6px 20px rgba(0,0,0,0.4);
-        }
-
-        button {
-            background: #4CAF50;
-            color: white;
-            padding: 14px 25px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            margin-top: 10px;
-        }
-
-        button:hover {
-            background: #388e3c;
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0px 6px 15px rgba(0,0,0,0.3);
-        }
-
-        #response {
-            margin-top: 20px;
-            font-weight: bold;
-            font-size: 22px;
-            color: #fff;
-            text-shadow: 1px 1px 5px rgba(0,0,0,0.4);
-            min-height: 30px;
-        }
-
-        a {
-            margin-top: 25px;
-            display: inline-block;
-            background: #222;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        a:hover {
-            background: #000;
-            transform: scale(1.05);
-        }
+        body { font-family: Arial, sans-serif; text-align: center; margin: 0; height: 100vh;
+               display: flex; flex-direction: column; justify-content: center; align-items: center;
+               background: linear-gradient(270deg, #667eea, #764ba2, #6dd5ed, #2193b0); background-size: 800% 800%;
+               animation: gradientBG 20s ease infinite; color: #fff; }
+        @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        h1 { padding: 30px; font-size: 2.2rem; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); margin-top: 20px; }
+        .container { background: rgba(255,255,255,0.08); padding: 18px; border-radius: 16px; backdrop-filter: blur(8px); display: flex; flex-direction: column; align-items: center; max-width: 760px; }
+        video { border: 4px solid #fff; border-radius: 12px; margin: 16px 0; width: 560px; height: 420px; box-shadow: 0px 6px 20px rgba(0,0,0,0.4); }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        button { color: #fff; padding: 10px 18px; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; transition: transform .15s ease; }
+        button:hover { transform: translateY(-3px); }
+        #startCount { background:#28a745 } #stopCount { background:#dc3545 } #manualBtn { background:#007bff }
+        #response { margin-top: 12px; font-weight: bold; font-size: 18px; color: #fff; min-height: 24px; }
+        #countingStatus { margin-top: 8px; font-size: 14px; }
+        table { margin-top: 16px; width: 92%; border-collapse: collapse; background: rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 8px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08); color:#fff; font-size:14px; }
+        th { font-weight:700; background: rgba(0,0,0,0.18); }
+        a { margin-top: 14px; display: inline-block; background: #222; color: white; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.2s; }
     </style>
 </head>
 <body>
+    <h1>🔍 Real-Time Face & Emotion Recognition</h1>
 
-    <h1>🔍 Real-Time Face Recognition</h1>
     <div class="container">
-        <video id="video" autoplay muted playsinline></video><br>
-        <button onclick="captureAndSend()">Manual Recognize</button>
+        <video id="video" autoplay muted playsinline></video>
+
+        <div class="controls">
+            <button id="startCount">▶ Start Counting</button>
+            <button id="stopCount">⏹ Stop Counting</button>
+            <button id="manualBtn">📸 Manual Recognize</button>
+        </div>
+
         <p id="response">Recognition result will appear here...</p>
+        <div id="countingStatus">Counting: <span id="countIndicator">OFF</span></div>
+
+        <table id="emotionTable">
+            <thead>
+                <tr><th>Name</th><th>Emotion</th><th>Count</th><th>First</th><th>Last</th></tr>
+            </thead>
+            <tbody id="emotionBody">
+                <tr><td colspan="5">No data yet...</td></tr>
+            </tbody>
+        </table>
     </div>
 
     <a href="/">⬅ Back to Home</a>
 
     <script>
+        // Helper to read csrf token from cookie (safe for templates too)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+
         const video = document.getElementById("video");
         const responseEl = document.getElementById("response");
-        let isProcessing = false;
+        const startCountBtn = document.getElementById("startCount");
+        const stopCountBtn = document.getElementById("stopCount");
+        const manualBtn = document.getElementById("manualBtn");
+        const countIndicator = document.getElementById("countIndicator");
+        const emotionBody = document.getElementById("emotionBody");
 
-        // Open webcam
+        let isProcessing = false;
+        let autoInterval = null;
+
+        // open webcam
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => { video.srcObject = stream; })
-            .catch(err => { console.error("Camera error:", err); });
+            .catch(err => { console.error("Camera error:", err); responseEl.innerText = "Camera error: " + err.message; });
 
-        // Capture and send to backend
+        // capture and send frame to recognize endpoint
         function captureAndSend() {
             if (isProcessing || video.videoWidth === 0) return;
             isProcessing = true;
 
             const canvas = document.createElement("canvas");
-            canvas.width = 320;   // smaller resolution
+            canvas.width = 320;
             canvas.height = 240;
             const ctx = canvas.getContext("2d");
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            const imageData = canvas.toDataURL("image/jpeg", 0.6); // compressed JPEG
+            const imageData = canvas.toDataURL("image/jpeg", 0.6);
 
             fetch("/recognize_user/", {
                 method: "POST",
+                credentials: "same-origin",
                 headers: {
-                    "X-CSRFToken": "{{ csrf_token }}",
+                    "X-CSRFToken": csrftoken,
                     "Content-Type": "application/x-www-form-urlencoded"
                 },
                 body: `image=${encodeURIComponent(imageData)}`
             })
             .then(res => res.json())
             .then(data => {
-                responseEl.innerText = data.message;
+                responseEl.innerText = data.message || "No face recognized.";
                 isProcessing = false;
+                fetchEmotionStats();
             })
             .catch(err => {
                 console.error("Recognition error:", err);
@@ -152,8 +119,93 @@
             });
         }
 
-        // 🔄 Auto recognition every 2s (lighter load)
-        setInterval(captureAndSend, 2000);
+        // Manual button
+        manualBtn.addEventListener("click", captureAndSend);
+
+        // Auto-recognition still runs (detection independent of counting)
+        function startAutoRecognition() {
+            if (autoInterval) return;
+            autoInterval = setInterval(captureAndSend, 2000);
+        }
+        function stopAutoRecognition() {
+            if (!autoInterval) return;
+            clearInterval(autoInterval);
+            autoInterval = null;
+        }
+        // start auto by default:
+        startAutoRecognition();
+
+        // Counting control functions (these toggle server session flag)
+        function startCounting() {
+            fetch("/start-counting/", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "X-CSRFToken": csrftoken }
+            })
+            .then(res => res.json())
+            .then(data => {
+                countIndicator.innerText = data.counting ? "ON" : "OFF";
+                countIndicator.style.color = data.counting ? "#9be36b" : "#f8d7da";
+                fetchEmotionStats();
+            })
+            .catch(err => console.error("Start counting error:", err));
+        }
+
+        function stopCounting() {
+            fetch("/stop-counting/", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "X-CSRFToken": csrftoken }
+            })
+            .then(res => res.json())
+            .then(data => {
+                countIndicator.innerText = data.counting ? "ON" : "OFF";
+                countIndicator.style.color = data.counting ? "#9be36b" : "#f8d7da";
+                fetchEmotionStats();
+            })
+            .catch(err => console.error("Stop counting error:", err));
+        }
+
+        startCountBtn.addEventListener("click", startCounting);
+        stopCountBtn.addEventListener("click", stopCounting);
+
+        // Get current counting status
+        function fetchCountingStatus() {
+            fetch("/counting-status/")
+                .then(res => res.json())
+                .then(data => {
+                    countIndicator.innerText = data.counting ? "ON" : "OFF";
+                    countIndicator.style.color = data.counting ? "#9be36b" : "#f8d7da";
+                })
+                .catch(err => console.error("Counting status error:", err));
+        }
+        // fetch once on load
+        fetchCountingStatus();
+        setInterval(fetchCountingStatus, 4000); // refresh status (optional)
+
+        // Fetch emotion stats and populate table
+        function fetchEmotionStats() {
+            fetch("/emotion-stats/")
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.length) {
+                        emotionBody.innerHTML = `<tr><td colspan="5">No data yet...</td></tr>`;
+                        return;
+                    }
+                    emotionBody.innerHTML = data.map(row => `
+                        <tr>
+                            <td>${row.name}</td>
+                            <td>${row.emotion}</td>
+                            <td>${row.count}</td>
+                            <td>${new Date(row.first_detected).toLocaleString()}</td>
+                            <td>${new Date(row.last_detected).toLocaleString()}</td>
+                        </tr>
+                    `).join("");
+                })
+                .catch(err => { console.error("Error fetching emotion stats:", err); });
+        }
+        fetchEmotionStats();
+        setInterval(fetchEmotionStats, 5000); // refresh table while running
     </script>
 </body>
 </html>
