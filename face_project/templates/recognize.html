@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <title>Real-Time Face & Emotion Recognition</title>
   <style>
-    /* Page */
     :root{
       --accent:#19a6d6;
       --glass: rgba(255,255,255,0.07);
@@ -21,8 +20,6 @@
       background-size: 800% 800%;
       animation: gradientBG 18s ease infinite;
       color: #fff;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
       padding: 28px 16px;
     }
     @keyframes gradientBG {
@@ -30,15 +27,12 @@
       50%{background-position:100% 50%}
       100%{background-position:0% 50%}
     }
-
-    /* Title */
     header {
       width:100%;
       display:flex;
       justify-content:center;
       align-items:center;
       margin-bottom: 18px;
-      pointer-events: none;
     }
     h1 {
       margin: 0;
@@ -46,17 +40,13 @@
       text-align:center;
       text-shadow: 0 6px 12px rgba(0,0,0,0.3);
       letter-spacing: 1px;
-      pointer-events: auto;
     }
-
-    /* Main content: left = video area, right = table */
     .main-content {
       display: flex;
       gap: 24px;
       align-items: flex-start;
       width: min(94vw, 1100px);
     }
-
     .left-panel {
       flex: 1 1 60%;
       min-width: 320px;
@@ -65,7 +55,6 @@
       align-items:center;
       gap:12px;
     }
-
     .right-panel {
       flex: 0 0 360px;
       min-width: 260px;
@@ -74,19 +63,15 @@
       gap:12px;
       align-items: stretch;
     }
-
     video{
-      width: 100%;
+      width: 80%;
       height: auto;
       max-height: 540px;
       border-radius: 14px;
       border: 4px solid rgba(255,255,255,0.95);
       box-shadow: 0 18px 40px rgba(0,0,0,0.35);
       background: #000;
-      display:block;
     }
-
-    /* Controls */
     .controls {
       display:flex;
       gap: 12px;
@@ -113,7 +98,6 @@
     .btn.stop  { background: linear-gradient(180deg,#ff6b6b,#d82a2a); }
     .btn.manual{ background: linear-gradient(180deg,#3690ff,#0a5fd6); }
 
-    /* response & indicator */
     #response {
       margin-top:6px;
       min-height:24px;
@@ -121,14 +105,12 @@
       color: var(--muted);
       text-shadow: 0 3px 8px rgba(0,0,0,0.25);
     }
-
     .indicator {
       margin-top:6px;
       padding:6px 12px;
       border-radius: 14px;
       background: rgba(255,255,255,0.08);
       font-weight:700;
-      display:inline-block;
       color:#fff;
       text-align:center;
     }
@@ -141,8 +123,6 @@
       opacity: 0.95;
       box-shadow: none;
     }
-
-    /* Emotion table (right panel) */
     .table-wrap {
       border-radius: 12px;
       overflow: hidden;
@@ -150,30 +130,31 @@
       background: var(--card-bg);
       backdrop-filter: blur(4px);
       border: 1px solid rgba(255,255,255,0.03);
-      padding: 8px;
+      padding: 4px;
+      font-size: 13px;
     }
     table {
-      width:100%;
+      width: 100%;
       border-collapse: collapse;
       color: #fff;
+      table-layout: fixed;
     }
     thead th {
-      text-align:left;
-      font-size:14px;
-      padding:12px 12px;
+      text-align: left;
+      font-size: 13px;
+      padding: 8px 8px;
       background: rgba(0,0,0,0.12);
-      font-weight:700;
+      font-weight: 700;
     }
     tbody td {
-      padding: 10px 12px;
-      font-size:14px;
+      padding: 6px 8px;
+      font-size: 13px;
       border-top: 1px solid rgba(255,255,255,0.03);
+      word-wrap: break-word;
     }
     tbody tr:nth-child(even) {
       background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
     }
-
-    /* Small footer link */
     .bottom {
       margin-top:14px;
     }
@@ -186,15 +167,19 @@
       text-decoration:none;
       font-weight:700;
     }
-
-    /* Responsive: stack on small screens */
+    #confidenceScore {
+      margin-top: 12px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: center;
+      color: #00ffd5;
+    }
     @media (max-width: 900px) {
       .main-content { flex-direction: column; align-items: center; }
       .right-panel { width: 100%; flex: none; }
       .left-panel { width: 100%; }
       video { max-height: 420px; }
     }
-
     @media (max-width: 480px) {
       h1 { font-size: 1.4rem; }
       .btn { font-size: 13px; padding: 8px 10px; }
@@ -206,7 +191,6 @@
   <header><h1>🔍 Real-Time Face & Emotion Recognition</h1></header>
 
   <div class="main-content" role="main">
-    <!-- LEFT: video + controls -->
     <section class="left-panel" aria-label="camera">
       <video id="video" autoplay muted playsinline></video>
 
@@ -220,7 +204,6 @@
       <div id="countingIndicator" class="indicator off">Counting: <strong id="countText">OFF</strong></div>
     </section>
 
-    <!-- RIGHT: emotion table -->
     <aside class="right-panel" aria-label="emotion counts">
       <div class="table-wrap" aria-live="polite">
         <table id="emotionTable" role="table">
@@ -238,198 +221,178 @@
           </tbody>
         </table>
       </div>
+
+      <!-- 🧠 Confidence Score -->
+      <div id="confidenceScore">Confidence: 0</div>
+
+      <!-- 🗑 Delete All button -->
+      <button class="btn stop" id="deleteBtn">🗑 Delete All</button>
     </aside>
   </div>
 
   <div class="bottom"><a href="/" class="home">⬅ Back to Home</a></div>
 
   <script>
-    /* === JS is unchanged from your previous version except kept inline === */
-    // CSRF helper
     function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-          const cookie = cookies[i].trim();
-          if (cookie.substring(0, name.length + 1) === (name + '=')) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
+      let v=null;
+      if (document.cookie && document.cookie!==''){
+        const c=document.cookie.split(';');
+        for (let i=0;i<c.length;i++){
+          const t=c[i].trim();
+          if (t.substring(0,name.length+1)===(name+'=')){
+            v=decodeURIComponent(t.substring(name.length+1));break;
           }
         }
       }
-      return cookieValue;
+      return v;
     }
-    const csrftoken = getCookie('csrftoken');
 
-    // DOM refs
-    const video = document.getElementById('video');
-    const responseEl = document.getElementById('response');
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn  = document.getElementById('stopBtn');
-    const manualBtn = document.getElementById('manualBtn');
-    const countIndicator = document.getElementById('countingIndicator');
-    const countText = document.getElementById('countText');
-    const emotionBody = document.getElementById('emotionBody');
+    const csrftoken=getCookie('csrftoken');
+    const video=document.getElementById('video'),
+          responseEl=document.getElementById('response'),
+          startBtn=document.getElementById('startBtn'),
+          stopBtn=document.getElementById('stopBtn'),
+          manualBtn=document.getElementById('manualBtn'),
+          countIndicator=document.getElementById('countingIndicator'),
+          countText=document.getElementById('countText'),
+          emotionBody=document.getElementById('emotionBody'),
+          deleteBtn=document.getElementById('deleteBtn'),
+          confidenceEl=document.getElementById('confidenceScore');
 
-    let isProcessing = false;
-    let autoInterval = null;
+    let isProcessing=false, autoInterval=null;
 
-    // Start webcam
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { video.srcObject = stream; })
-      .catch(err => {
-        console.error('Camera error:', err);
-        responseEl.textContent = 'Camera error: ' + (err.message || err);
-      });
+    navigator.mediaDevices.getUserMedia({video:true})
+      .then(s=>video.srcObject=s)
+      .catch(e=>{console.error('Camera error:',e);responseEl.textContent='Camera error: '+(e.message||e);});
 
-    // Capture & send a frame to recognition endpoint
-    function captureAndSend() {
-      if (isProcessing || video.videoWidth === 0) return;
-      isProcessing = true;
-
-      const canvas = document.createElement('canvas');
-      canvas.width = 320;
-      canvas.height = 240;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const imageData = canvas.toDataURL('image/jpeg', 0.6);
-
-      fetch('/recognize_user/', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'X-CSRFToken': csrftoken,
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `image=${encodeURIComponent(imageData)}`
-      })
-      .then(r => r.json())
-      .then(data => {
-        responseEl.textContent = data.message || 'No face recognized.';
-        isProcessing = false;
-        fetchEmotionStats();
-      })
-      .catch(err => {
-        console.error('Recognition error:', err);
-        responseEl.textContent = '⚠ Error recognizing face.';
-        isProcessing = false;
+    function captureAndSend(){
+      if(isProcessing||video.videoWidth===0)return;
+      isProcessing=true;
+      const c=document.createElement('canvas');
+      c.width=320;c.height=240;
+      const x=c.getContext('2d');
+      x.drawImage(video,0,0,c.width,c.height);
+      const img=c.toDataURL('image/jpeg',0.6);
+      fetch('/recognize_user/',{
+        method:'POST',credentials:'same-origin',
+        headers:{'X-CSRFToken':csrftoken,'Content-Type':'application/x-www-form-urlencoded'},
+        body:`image=${encodeURIComponent(img)}`
+      }).then(r=>r.json()).then(d=>{
+        responseEl.textContent=d.message||'No face recognized.';
+        isProcessing=false;fetchEmotionStats();
+      }).catch(e=>{
+        console.error('Recognition error:',e);
+        responseEl.textContent='⚠ Error recognizing face.';
+        isProcessing=false;
       });
     }
 
-    // Auto recognition runs every 2s (detection independent of counting)
-    function startAutoRecognition() {
-      if (autoInterval) return;
-      autoInterval = setInterval(captureAndSend, 2000);
-    }
-    function stopAutoRecognition() {
-      if (!autoInterval) return;
-      clearInterval(autoInterval);
-      autoInterval = null;
-    }
-    // start auto by default so detection continues
+    function startAutoRecognition(){if(autoInterval)return;autoInterval=setInterval(captureAndSend,2000);}
+    function stopAutoRecognition(){if(!autoInterval)return;clearInterval(autoInterval);autoInterval=null;}
     startAutoRecognition();
 
-    // Counting control: call server endpoints to toggle counting flag
-    function startCounting() {
-      fetch('/start-counting/', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'X-CSRFToken': csrftoken }
-      })
-      .then(r => r.json())
-      .then(data => {
-        const on = !!data.counting;
-        countText.textContent = on ? 'ON' : 'OFF';
-        countIndicator.classList.toggle('on', on);
-        countIndicator.classList.toggle('off', !on);
+    function startCounting(){
+      fetch('/start-counting/',{method:'POST',credentials:'same-origin',headers:{'X-CSRFToken':csrftoken}})
+      .then(r=>r.json()).then(d=>{
+        const on=!!d.counting;
+        countText.textContent=on?'ON':'OFF';
+        countIndicator.classList.toggle('on',on);
+        countIndicator.classList.toggle('off',!on);
+        confidenceEl.textContent='Confidence: 0';
         fetchEmotionStats();
-      })
-      .catch(err => console.error('Start counting error:', err));
+      });
     }
 
-    function stopCounting() {
-      fetch('/stop-counting/', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'X-CSRFToken': csrftoken }
-      })
-      .then(r => r.json())
-      .then(data => {
-        const on = !!data.counting;
-        countText.textContent = on ? 'ON' : 'OFF';
-        countIndicator.classList.toggle('on', on);
-        countIndicator.classList.toggle('off', !on);
+    function stopCounting(){
+      fetch('/stop-counting/',{method:'POST',credentials:'same-origin',headers:{'X-CSRFToken':csrftoken}})
+      .then(r=>r.json())
+      .then(d=>{
+        const on=!!d.counting;
+        countText.textContent=on?'ON':'OFF';
+        countIndicator.classList.toggle('on',on);
+        countIndicator.classList.toggle('off',!on);
+        if(d.final_confidence!==undefined){
+          confidenceEl.textContent='Final Confidence: '+d.final_confidence;
+        }
         fetchEmotionStats();
-      })
-      .catch(err => console.error('Stop counting error:', err));
+      });
     }
 
-    // Fetch server-side counting status and update indicator
-    function fetchCountingStatus() {
-      fetch('/counting-status/', { credentials: 'same-origin' })
-        .then(r => r.json())
-        .then(data => {
-          const on = !!data.counting;
-          countText.textContent = on ? 'ON' : 'OFF';
-          countIndicator.classList.toggle('on', on);
-          countIndicator.classList.toggle('off', !on);
-        })
-        .catch(err => console.error('Counting status error:', err));
+    function fetchCountingStatus(){
+      fetch('/counting-status/',{credentials:'same-origin'})
+      .then(r=>r.json()).then(d=>{
+        const on=!!d.counting;
+        countText.textContent=on?'ON':'OFF';
+        countIndicator.classList.toggle('on',on);
+        countIndicator.classList.toggle('off',!on);
+      });
     }
 
-    // Fetch emotion records and populate table
-    function fetchEmotionStats() {
-      fetch('/emotion-stats/', { credentials: 'same-origin' })
-        .then(r => r.json())
-        .then(rows => {
-          if (!Array.isArray(rows) || rows.length === 0) {
-            emotionBody.innerHTML = '<tr><td colspan="5" style="color:rgba(255,255,255,0.75);padding:14px 16px">No data yet...</td></tr>';
-            return;
-          }
-          emotionBody.innerHTML = rows.map(row => {
-            const firstTime = row.first_detected ? new Date(row.first_detected).toLocaleString() : '-';
-            const lastTime  = row.last_detected  ? new Date(row.last_detected).toLocaleString()  : '-';
-            return `
-              <tr>
-                <td>${escapeHtml(row.name)}</td>
-                <td>${escapeHtml(row.emotion)}</td>
-                <td>${row.count}</td>
-                <td>${firstTime}</td>
-                <td>${lastTime}</td>
-              </tr>
-            `;
+    function fetchEmotionStats(){
+      fetch('/emotion-stats/',{credentials:'same-origin'})
+      .then(r=>r.json()).then(rows=>{
+        if(!Array.isArray(rows)||rows.length===0){
+          emotionBody.innerHTML='<tr><td colspan="5" style="color:rgba(255,255,255,0.75);padding:14px 16px">No data yet...</td></tr>';
+        } else {
+          emotionBody.innerHTML=rows.map(row=>{
+            const f=row.first_detected?new Date(row.first_detected).toLocaleString():'-';
+            const l=row.last_detected?new Date(row.last_detected).toLocaleString():'-';
+            return `<tr><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.emotion)}</td><td>${row.count}</td><td>${f}</td><td>${l}</td></tr>`;
           }).join('');
-        })
-        .catch(err => {
-          console.error('Error fetching emotion stats:', err);
-        });
+        }
+        updateConfidenceScore(); // 🔥 update confidence dynamically
+      });
     }
 
-    // simple helper to avoid injecting raw html for names/emotions
-    function escapeHtml(str){
-      if (str === null || str === undefined) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    // === Calculate confidence dynamically from table ===
+    function updateConfidenceScore() {
+      const rows = Array.from(emotionBody.querySelectorAll('tr')).filter(r => r.children.length===5);
+      if(rows.length === 0){ confidenceEl.textContent = 'Confidence: 0'; return; }
+
+      let totalCount = 0, weightedSum = 0;
+      rows.forEach(r=>{
+        const count = parseInt(r.children[2].textContent) || 0;
+        const emotion = r.children[1].textContent.toLowerCase();
+        let weight = 1;
+        switch(emotion){
+          case 'happy': weight = 1; break;
+          case 'neutral': weight = 0.8; break;
+          case 'sad': weight = 0.5; break;
+          case 'angry': weight = 0.3; break;
+          default: weight = 0.6;
+        }
+        weightedSum += count * weight;
+        totalCount += count;
+      });
+      const confidence = totalCount ? ((weightedSum / totalCount) * 100).toFixed(1) : 0;
+      confidenceEl.textContent = 'Confidence: ' + confidence + '%';
     }
 
-    // Wire buttons
-    startBtn.addEventListener('click', startCounting);
-    stopBtn.addEventListener('click', stopCounting);
-    manualBtn.addEventListener('click', captureAndSend);
+    function escapeHtml(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');}
 
-    // initial loads
+    function deleteAllEmotions(){
+      if(!confirm('Are you sure you want to delete all emotion records?'))return;
+      fetch('/delete-emotions/',{method:'POST',credentials:'same-origin',headers:{'X-CSRFToken':csrftoken}})
+      .then(r=>r.json())
+      .then(d=>{
+        responseEl.textContent=d.message||'All emotion records deleted.';
+        fetchEmotionStats();
+      })
+      .catch(e=>{
+        console.error('Error deleting emotions:',e);
+        responseEl.textContent='⚠ Error deleting records.';
+      });
+    }
+
+    startBtn.addEventListener('click',startCounting);
+    stopBtn.addEventListener('click',stopCounting);
+    manualBtn.addEventListener('click',captureAndSend);
+    deleteBtn.addEventListener('click',deleteAllEmotions);
+
     fetchCountingStatus();
     fetchEmotionStats();
-
-    // periodic refreshes
-    setInterval(fetchCountingStatus, 4000); // keep indicator in sync
-    setInterval(fetchEmotionStats, 5000);   // update table while app runs
+    setInterval(fetchCountingStatus,4000);
+    setInterval(fetchEmotionStats,5000);
   </script>
 </body>
 </html>

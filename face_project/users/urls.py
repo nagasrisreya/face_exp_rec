@@ -14,6 +14,7 @@ urlpatterns = [
     path('start-counting/', views.start_counting, name='start_counting'),
     path('stop-counting/', views.stop_counting, name='stop_counting'),
     path('counting-status/', views.counting_status, name='counting_status'),
+        path('delete-emotions/', views.delete_emotions, name='delete_emotions'),
 ]
 
 

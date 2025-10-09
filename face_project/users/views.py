@@ -10,6 +10,7 @@ import numpy as np
 import face_recognition
 import time
 from .models import EmotionRecord  # ensure this model exists
+from django.views.decorators.csrf import csrf_exempt
 
 # ------------------------------------------------------------------
 # Config and Initialization
@@ -65,13 +66,13 @@ def detect_emotion_from_landmarks(face_img):
 
         if mar > 0.35 and ear > 0.28 and brow_eye_norm > 0.03:
             emotion, conf = "Surprise", 0.95
-        elif corner_up_norm > 0.015 and mar > 0.22:
+        elif ear > 0.07 and mar > 0.2:
             emotion, conf = "Happy", 0.9
         elif brow_eye_norm < 0.01 and ear < 0.16 and mar < 0.18:
             emotion, conf = "Angry", 0.88
         elif brow_eye_norm > 0.05 and ear > 0.50 and mar < 0.25:
             emotion, conf = "Fear", 0.78
-        elif ear < 0.2 and mar < 0.2:
+        elif ear < 0.2 and mar < 0.1:
             emotion, conf = "Sad", 0.85
         elif mouth_width_norm < 0.18 and corner_up_norm > 0.005 and mar < 0.12:
             emotion, conf = "Disgust", 0.70
@@ -187,9 +188,9 @@ TIMER_DURATION = 30
 
 def update_confidence_score(emotion, score):
     if emotion in POSITIVE_EMOTIONS:
-        return score + 1
+        return score + 2
     elif emotion in NEGATIVE_EMOTIONS:
-        return score - 1
+        return score - 2
     return score
 
 # ------------------------------------------------------------------
@@ -218,13 +219,20 @@ def emotion_stats(request):
 def start_counting(request):
     if request.method == "POST":
         request.session['counting_active'] = True
+        request.session['confidence_score'] = 0
         return JsonResponse({"status":"success", "counting": True, "message":"Counting started."})
     return JsonResponse({"status":"error", "message":"Invalid request."}, status=405)
 
 def stop_counting(request):
     if request.method == "POST":
+        final_conf = request.session.get('confidence_score', 0)
         request.session['counting_active'] = False
-        return JsonResponse({"status":"success", "counting": False, "message":"Counting stopped."})
+        return JsonResponse({
+            "status":"success",
+            "counting": False,
+            "message":"Counting stopped.",
+            "final_confidence": final_conf
+        })
     return JsonResponse({"status":"error", "message":"Invalid request."}, status=405)
 
 def counting_status(request):
@@ -236,7 +244,7 @@ def counting_status(request):
 def start_confidence_test(request):
     if request.method == "POST":
         request.session['test_start_time'] = time.time()
-        request.session['confidence_score'] = 50
+        request.session['confidence_score'] = 0
         return JsonResponse({"message":"Test started.","status":"success"})
     return JsonResponse({"message":"Invalid request.","status":"error"}, status=405)
 
@@ -257,7 +265,7 @@ def process_frame(request):
         return JsonResponse({"message":"Invalid image format.","status":"error"})
 
     face_locations, face_regions = detect_faces_mediapipe(frame)
-    score = request.session.get('confidence_score', 50)
+    score = request.session.get('confidence_score', 0)
     name, emotion = "Unknown", "Neutral"
 
     if face_regions:
@@ -358,3 +366,13 @@ def recognize_user(request):
         except Exception as e:
             return JsonResponse({"message":f"Error: {e}"})
     return render(request, "recognize.html")
+
+# ------------------------------------------------------------------
+# Delete all emotion records
+# ------------------------------------------------------------------
+@csrf_exempt
+def delete_emotions(request):
+    if request.method == "POST":
+        EmotionRecord.objects.all().delete()
+        return JsonResponse({"message": "All emotion records deleted successfully."})
+    return JsonResponse({"error": "Invalid request method."}, status=405)
