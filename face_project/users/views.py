@@ -31,65 +31,143 @@ TARGET_FACE_SIZE = 160
 # ------------------------------------------------------------------
 # Emotion detection helpers (unchanged)
 # ------------------------------------------------------------------
+import numpy as np
+
 def detect_emotion_from_landmarks(face_img):
+    """
+    Improved rule-based emotion detector using FaceMesh landmarks.
+    Uses EAR (eye aspect ratio), MAR (mouth aspect ratio), brow-eye distance,
+    and mouth-corner geometry to infer emotions.
+    Returns: (emotion_str, confidence_float)
+    """
     try:
-        if face_img.size == 0: return "Neutral", 0.5
+        if face_img is None or face_img.size == 0:
+            return "Neutral", 0.5
+
         rgb_face = cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB)
         results = face_mesh.process(rgb_face)
-        if not results.multi_face_landmarks: return "Neutral", 0.5
-
-        landmarks = results.multi_face_landmarks[0].landmark
-        h, w = face_img.shape[:2]
-        try:
-            lip_top, lip_bottom = landmarks[13], landmarks[14]
-            mouth_left, mouth_right = landmarks[61], landmarks[291]
-            left_eye_top, left_eye_bottom = landmarks[159], landmarks[145]
-            right_eye_top, right_eye_bottom = landmarks[386], landmarks[374]
-
-            mouth_height = abs(lip_bottom.y * h - lip_top.y * h)
-            mouth_width = abs(mouth_right.x * w - mouth_left.x * w)
-            mouth_aspect_ratio = mouth_height / (mouth_width + 1e-5)
-
-            left_eye_openness = abs(left_eye_bottom.y * h - left_eye_top.y * h)
-            right_eye_openness = abs(right_eye_bottom.y * h - right_eye_top.y * h)
-            avg_eye_openness = (left_eye_openness + right_eye_openness) / 2
-
-            emotions, confidences = [], []
-
-            if mouth_aspect_ratio > 0.15:
-                emotions.append("Happy")
-                confidences.append(min(0.9, mouth_aspect_ratio * 3))
-            if avg_eye_openness > 15:
-                emotions.append("Surprise")
-                confidences.append(min(0.9, avg_eye_openness / 25))
-            if mouth_aspect_ratio < 0.01:
-                emotions.append("Sad")
-                confidences.append(0.6)
-
-            if not emotions: return "Neutral", 0.6
-
-            best_idx = np.argmax(confidences)
-            best_confidence = confidences[best_idx]
-
-            return (emotions[best_idx], best_confidence) if best_confidence >= EMOTION_CONFIDENCE else ("Neutral", best_confidence)
-        except IndexError:
+        if not results.multi_face_landmarks:
             return "Neutral", 0.5
+
+        lm = results.multi_face_landmarks[0].landmark
+        h, w = face_img.shape[:2]
+
+        # helper to get (x,y) in pixel coords
+        def P(i):
+            return np.array([lm[i].x * w, lm[i].y * h])
+
+        # Mediapipe face mesh indices (commonly used sets)
+        LE = [33, 160, 158, 133, 153, 144]     # left eye
+        RE = [263, 387, 385, 362, 380, 373]    # right eye
+        # mouth top/bottom and corners
+        M_TOP, M_BOTTOM = 13, 14
+        M_L, M_R = 61, 291
+        # eyebrow / eye reference points
+        BROW_L, BROW_R = 70, 300
+        EYE_TOP_L, EYE_TOP_R = 159, 386
+
+        # compute EAR for an eye (based on 6 points: p1..p6)
+        def eye_ear(indices):
+            p = [P(i) for i in indices]
+            # EAR = (||p2-p6|| + ||p3-p5||) / (2 * ||p1-p4||)
+            vert = np.linalg.norm(p[1] - p[5]) + np.linalg.norm(p[2] - p[4])
+            horz = np.linalg.norm(p[0] - p[3]) + 1e-6
+            return vert / (2.0 * horz)
+
+        ear_l = eye_ear(LE)
+        ear_r = eye_ear(RE)
+        ear = (ear_l + ear_r) / 2.0
+
+        # mouth aspect ratio (MAR)
+        top = P(M_TOP); bottom = P(M_BOTTOM)
+        left_m = P(M_L); right_m = P(M_R)
+        mouth_vert = np.linalg.norm(bottom - top)
+        mouth_horz = np.linalg.norm(right_m - left_m) + 1e-6
+        mar = mouth_vert / mouth_horz
+
+        # mouth width normalized
+        mouth_width_norm = mouth_horz / float(w)
+
+        # eyebrow distance relative to eyes (brow raise / lower)
+        brow_l = P(BROW_L); brow_r = P(BROW_R)
+        eye_top_l = P(EYE_TOP_L); eye_top_r = P(EYE_TOP_R)
+        brow_eye_dist = ((eye_top_l[1] - brow_l[1]) + (eye_top_r[1] - brow_r[1])) / 2.0
+        brow_eye_norm = brow_eye_dist / float(h)   # bigger => brows raised
+
+        # mouth corner relative to lip center (smile indicator)
+        lip_center = (top + bottom) / 2.0
+        corner_up = ((lip_center[1] - left_m[1]) + (lip_center[1] - right_m[1])) / 2.0
+        corner_up_norm = corner_up / float(h)   # positive => corners higher than lip center (smile)
+
+        # Small normalization transforms to make thresholds more stable:
+        # (these scale values into comfortable ranges for thresholds below)
+        # ear typical range ~ 0.10 - 0.35, mar typical ~ 0.02 - 0.6
+        # Decide emotion by rules and assign confidences
+        emotion = "Neutral"
+        conf = 0.5
+
+        # ----- Rules (ordered by more-specific -> less-specific) -----
+        # Surprise: very open mouth, wide eyes, brows raised
+        if mar > 0.35 and ear > 0.28 and brow_eye_norm > 0.03:
+            emotion, conf = "Surprise", 0.95
+
+        # Big smile: mouth open enough and corners up
+        elif corner_up_norm > 0.015 and mar > 0.22:
+            emotion, conf = "Happy", 0.9
+
+        # Angry: brows lowered (small brow_eye_norm), narrow eyes, mouth tight
+        elif brow_eye_norm < 0.01 and ear < 0.16 and mar < 0.18:
+            emotion, conf = "Angry", 0.88
+
+        # Fear: brows somewhat raised but mouth not as wide as surprise, eyes open
+        elif brow_eye_norm > 0.05 and ear > 0.50 and mar < 0.25:
+            emotion, conf = "Fear", 0.78
+
+        # Sad: eyes droopy (low EAR) and mouth small / corners down
+        elif ear < 0.2 and mar < 0.2:
+            emotion, conf = "Sad", 0.85
+
+        # Disgust (approx): mouth narrow and upper lip raised (corners slightly up but small width)
+        elif mouth_width_norm < 0.18 and corner_up_norm > 0.005 and mar < 0.12:
+            emotion, conf = "Disgust", 0.70
+
+        # Neutral fallback
+        else:
+            emotion, conf = "Neutral", 0.6
+
+        # Respect your EMOTION_CONFIDENCE threshold
+        if conf < EMOTION_CONFIDENCE:
+            return "Neutral", conf
+        return emotion, conf
+
     except Exception as e:
         print(f"Landmark emotion detection error: {e}")
         return "Neutral", 0.5
 
 
 def detect_emotion_with_opencv(face_img):
+    """
+    Try landmark-based detector first (better). Fallback to smile cascade.
+    """
     try:
-        if face_img.size == 0: return "Neutral", 0.5
+        if face_img is None or face_img.size == 0:
+            return "Neutral", 0.5
+
+        # Landmark-based detection (preferred)
+        emotion, conf = detect_emotion_from_landmarks(face_img)
+        if emotion != "Neutral" or conf >= EMOTION_CONFIDENCE:
+            return emotion, conf
+
+        # Fallback: Haar smile detection
         gray = cv2.cvtColor(face_img, cv2.COLOR_BGR2GRAY)
         smile_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_smile.xml')
-        if smile_cascade.empty():
-            return detect_emotion_from_landmarks(face_img)
-        smiles = smile_cascade.detectMultiScale(gray, scaleFactor=1.8, minNeighbors=20, minSize=(25, 25))
-        if len(smiles) > 0:
-            return "Happy", 0.7
-        return detect_emotion_from_landmarks(face_img)
+        if not smile_cascade.empty():
+            smiles = smile_cascade.detectMultiScale(gray, scaleFactor=1.7, minNeighbors=20, minSize=(25, 25))
+            if len(smiles) > 0:
+                return "Happy", 0.8
+
+        return "Neutral", 0.5
+
     except Exception as e:
         print(f"OpenCV emotion detection error: {e}")
         return "Neutral", 0.5
