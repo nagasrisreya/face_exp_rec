@@ -9,6 +9,7 @@
       --accent:#19a6d6;
       --glass: rgba(255,255,255,0.07);
       --muted: rgba(255,255,255,0.85);
+      --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     }
     html,body{height:100%;margin:0;}
     body {
@@ -36,29 +37,46 @@
       display:flex;
       justify-content:center;
       align-items:center;
-      margin-bottom: 12px;
+      margin-bottom: 18px;
       pointer-events: none;
     }
     h1 {
       margin: 0;
-      font-size: 2.6rem;
+      font-size: 2.4rem;
       text-align:center;
       text-shadow: 0 6px 12px rgba(0,0,0,0.3);
       letter-spacing: 1px;
       pointer-events: auto;
     }
 
-    /* Video area (no outer bounding card) */
-    .video-wrap {
+    /* Main content: left = video area, right = table */
+    .main-content {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      width: min(94vw, 1100px);
+    }
+
+    .left-panel {
+      flex: 1 1 60%;
+      min-width: 320px;
       display:flex;
       flex-direction:column;
       align-items:center;
-      gap: 12px;
-      width: min(88vw, 820px);
+      gap:12px;
+    }
+
+    .right-panel {
+      flex: 0 0 360px;
+      min-width: 260px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items: stretch;
     }
 
     video{
-      width: min(84vw, 720px);
+      width: 100%;
       height: auto;
       max-height: 540px;
       border-radius: 14px;
@@ -97,7 +115,7 @@
 
     /* response & indicator */
     #response {
-      margin-top:10px;
+      margin-top:6px;
       min-height:24px;
       font-size: 18px;
       color: var(--muted);
@@ -105,13 +123,14 @@
     }
 
     .indicator {
-      margin-top:10px;
+      margin-top:6px;
       padding:6px 12px;
       border-radius: 14px;
       background: rgba(255,255,255,0.08);
       font-weight:700;
       display:inline-block;
       color:#fff;
+      text-align:center;
     }
     .indicator.on {
       background: linear-gradient(90deg, rgba(124,252,0,0.18), rgba(124,252,0,0.08));
@@ -123,16 +142,15 @@
       box-shadow: none;
     }
 
-    /* Emotion table */
+    /* Emotion table (right panel) */
     .table-wrap {
-      width: min(88vw, 820px);
-      margin-top: 18px;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      background: var(--card-bg);
       backdrop-filter: blur(4px);
       border: 1px solid rgba(255,255,255,0.03);
+      padding: 8px;
     }
     table {
       width:100%;
@@ -142,12 +160,12 @@
     thead th {
       text-align:left;
       font-size:14px;
-      padding:12px 16px;
+      padding:12px 12px;
       background: rgba(0,0,0,0.12);
       font-weight:700;
     }
     tbody td {
-      padding: 12px 16px;
+      padding: 10px 12px;
       font-size:14px;
       border-top: 1px solid rgba(255,255,255,0.03);
     }
@@ -169,50 +187,64 @@
       font-weight:700;
     }
 
-    /* Responsive */
-    @media (max-width:720px){
-      h1{ font-size:1.6rem; margin-top:6px; }
-      .btn{ font-size:14px; padding:10px 12px; }
-      thead th, tbody td { padding:10px; font-size:13px; }
+    /* Responsive: stack on small screens */
+    @media (max-width: 900px) {
+      .main-content { flex-direction: column; align-items: center; }
+      .right-panel { width: 100%; flex: none; }
+      .left-panel { width: 100%; }
+      video { max-height: 420px; }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 1.4rem; }
+      .btn { font-size: 13px; padding: 8px 10px; }
+      thead th, tbody td { font-size: 13px; padding: 8px; }
     }
   </style>
 </head>
 <body>
   <header><h1>🔍 Real-Time Face & Emotion Recognition</h1></header>
 
-  <main class="video-wrap">
-    <video id="video" autoplay muted playsinline></video>
+  <div class="main-content" role="main">
+    <!-- LEFT: video + controls -->
+    <section class="left-panel" aria-label="camera">
+      <video id="video" autoplay muted playsinline></video>
 
-    <div class="controls" role="group" aria-label="controls">
-      <button class="btn start" id="startBtn">▶ Start Counting</button>
-      <button class="btn stop" id="stopBtn">⏹ Stop Counting</button>
-      <button class="btn manual" id="manualBtn">📸 Manual Recognize</button>
-    </div>
+      <div class="controls" role="group" aria-label="controls">
+        <button class="btn start" id="startBtn">▶ Start Counting</button>
+        <button class="btn stop" id="stopBtn">⏹ Stop Counting</button>
+        <button class="btn manual" id="manualBtn">📸 Manual Recognize</button>
+      </div>
 
-    <div id="response">Recognition result will appear here...</div>
-    <div id="countingIndicator" class="indicator off">Counting: <strong id="countText">OFF</strong></div>
+      <div id="response">Recognition result will appear here...</div>
+      <div id="countingIndicator" class="indicator off">Counting: <strong id="countText">OFF</strong></div>
+    </section>
 
-    <div class="table-wrap" aria-live="polite">
-      <table id="emotionTable" role="table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Emotion</th>
-            <th>Count</th>
-            <th>First Detected</th>
-            <th>Last Detected</th>
-          </tr>
-        </thead>
-        <tbody id="emotionBody">
-          <tr><td colspan="5" style="color:rgba(255,255,255,0.75);padding:14px 16px">No data yet...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </main>
+    <!-- RIGHT: emotion table -->
+    <aside class="right-panel" aria-label="emotion counts">
+      <div class="table-wrap" aria-live="polite">
+        <table id="emotionTable" role="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Emotion</th>
+              <th>Count</th>
+              <th>First Detected</th>
+              <th>Last Detected</th>
+            </tr>
+          </thead>
+          <tbody id="emotionBody">
+            <tr><td colspan="5" style="color:rgba(255,255,255,0.75);padding:14px 16px">No data yet...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </aside>
+  </div>
 
   <div class="bottom"><a href="/" class="home">⬅ Back to Home</a></div>
 
   <script>
+    /* === JS is unchanged from your previous version except kept inline === */
     // CSRF helper
     function getCookie(name) {
       let cookieValue = null;
@@ -275,10 +307,8 @@
       })
       .then(r => r.json())
       .then(data => {
-        // Show recognition message (e.g., "Recognized: srey a (Sad)")
         responseEl.textContent = data.message || 'No face recognized.';
         isProcessing = false;
-        // refresh table to show new counts (only increments on server if counting is active)
         fetchEmotionStats();
       })
       .catch(err => {
@@ -301,7 +331,7 @@
     // start auto by default so detection continues
     startAutoRecognition();
 
-    // Counting control: call server endpoints to toggle counting flag (server uses this flag to decide whether to increment counts)
+    // Counting control: call server endpoints to toggle counting flag
     function startCounting() {
       fetch('/start-counting/', {
         method: 'POST',
@@ -314,7 +344,6 @@
         countText.textContent = on ? 'ON' : 'OFF';
         countIndicator.classList.toggle('on', on);
         countIndicator.classList.toggle('off', !on);
-        // immediate refresh to see status and counts
         fetchEmotionStats();
       })
       .catch(err => console.error('Start counting error:', err));
@@ -360,7 +389,6 @@
             return;
           }
           emotionBody.innerHTML = rows.map(row => {
-            // format datetimes nicely (fallback if missing)
             const firstTime = row.first_detected ? new Date(row.first_detected).toLocaleString() : '-';
             const lastTime  = row.last_detected  ? new Date(row.last_detected).toLocaleString()  : '-';
             return `
