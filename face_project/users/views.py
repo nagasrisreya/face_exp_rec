@@ -11,6 +11,7 @@ import face_recognition
 import time
 from .models import EmotionRecord  # ensure this model exists
 from django.views.decorators.csrf import csrf_exempt
+from .face_utils import detect_emotion_model
 
 # ------------------------------------------------------------------
 # Config and Initialization
@@ -279,7 +280,7 @@ def process_frame(request):
                 if dists[best_i] < 0.6:
                     name = face_data["names"][best_i]
 
-        emotion, _ = detect_emotion_with_opencv(face_roi)
+        emotion, _ = detect_emotion_model(face_roi)
         score = update_confidence_score(emotion, score)
         request.session['confidence_score'] = score
 
@@ -356,7 +357,7 @@ def recognize_user(request):
                     best_i = np.argmin(dists)
                     if dists[best_i] < 0.6:
                         name = data["names"][best_i]
-                emotion, _ = detect_emotion_with_opencv(face_roi)
+                emotion, _ = detect_emotion_model(face_roi)
                 results_out.append(f"{name} ({emotion})")
 
                 if request.session.get('counting_active', False):

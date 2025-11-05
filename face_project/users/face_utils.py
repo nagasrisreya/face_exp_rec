@@ -5,6 +5,8 @@ import os
 import numpy as np
 import face_recognition
 from fer import FER
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing.image import img_to_array
 
 # ------------------------------------------------------------------
 # Config
@@ -18,6 +20,18 @@ MAX_FRAME_SIZE = 800
 mp_face_detection = mp.solutions.face_detection
 face_detection = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.5)
 expression_detector = FER(mtcnn=True)  # Changed to True for better accuracy
+
+# Load emotion model
+EMOTION_MODEL_PATH = os.path.join(os.path.dirname(__file__), '..', 'model', 'emotion_model.h5')
+try:
+    emotion_model = load_model(EMOTION_MODEL_PATH, compile=False)
+    # Recompile with updated optimizer config
+    from tensorflow.keras.optimizers import Adam
+    emotion_model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
+except Exception as e:
+    print(f"Error loading emotion model: {e}")
+    emotion_model = None
+EMOTION_LABELS = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
 # ------------------------------------------------------------------
 # Helpers
@@ -199,4 +213,31 @@ def detect_emotion_alternative(face_img):
                 
     except Exception as e:
         print(f"Error in alternative emotion detection: {e}")
+        return "Neutral", 0.5
+
+
+def detect_emotion_model(face_img):
+    """Detect emotion using the trained model"""
+    if emotion_model is None:
+        print("Emotion model not loaded, falling back to alternative detection.")
+        return detect_emotion_alternative(face_img)
+
+    try:
+        # Resize to 64x64 (model expects this size)
+        resized = cv2.resize(face_img, (64, 64))
+        # Convert to grayscale (model expects 1 channel)
+        gray_face = cv2.cvtColor(resized, cv2.COLOR_BGR2GRAY)
+        # Normalize to [0,1]
+        normalized = gray_face.astype("float") / 255.0
+        # Add channel dimension and batch dimension
+        img_array = np.expand_dims(normalized, axis=[0, -1])
+        # Predict
+        predictions = emotion_model.predict(img_array)[0]
+        # Get the emotion with highest probability
+        max_index = np.argmax(predictions)
+        emotion = EMOTION_LABELS[max_index]
+        confidence = float(predictions[max_index])
+        return emotion, confidence
+    except Exception as e:
+        print(f"Error in model emotion detection: {e}")
         return "Neutral", 0.5
