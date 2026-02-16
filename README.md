@@ -12,9 +12,7 @@ The system tracks emotions per user and computes a confidence score based on emo
 * 🙂 Emotion detection (Happy, Neutral, Sad, Angry, etc.)
 * 🔢 Emotion count tracking per user
 * 🧠 Confidence score calculation based on emotions
-* ▶️ Start / Stop emotion counting
 * 📊 Real-time emotion statistics table
-* 🗑️ Delete all emotion records
 * 🔐 Secure backend with CSRF protection
 
 ---
